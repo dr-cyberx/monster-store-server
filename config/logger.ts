@@ -4,8 +4,8 @@ import WinstonCloudWatch from "winston-cloudwatch";
 const colors = {
   error: "red",
   warn: "yellow",
-  info: "green",
-  debug: "blue",
+  info: "blue",
+  debug: "yellow",
 };
 
 winston.addColors(colors);
