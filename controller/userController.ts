@@ -3,6 +3,7 @@ import { logger } from "../config/logger";
 import asyncHandler from "../middleware/asyncHandler";
 import user from "../models/userModel";
 import generateToken from "../utils/createToken";
+import { iGetAllUserQuery } from "../types/controllerTypes";
 
 const createUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
@@ -79,8 +80,22 @@ const logoutCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const getAllUsers = asyncHandler(async (req, res) => {
-  const users = await user.find({});
-  res.status(200).json(users);
+  try {
+    const { _id, email, username, isAdmin } = req.query;
+
+    let filter: iGetAllUserQuery = {};
+
+    if (_id) filter._id = _id as string;
+    if (email) filter.email = email as string;
+    if (username) filter.username = username as string;
+    if (isAdmin) filter.isAdmin = Boolean(isAdmin);
+
+    const users = await user.find(filter).select("-password");
+    res.status(200).json(users);
+  } catch (error) {
+    logger.error(JSON.stringify(error));
+    throw new Error("Something went wrong");
+  }
 });
 
 const getCurrentUserProfile = asyncHandler(async (req, res) => {
@@ -133,6 +148,38 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
+const deleteUserById = asyncHandler(async (req, res) => {
+  const userToDelete = await user.findById(req.params.id);
+
+  if (userToDelete) {
+    if (userToDelete.isAdmin) {
+      res.status(400);
+      throw new Error("Admin cannot be deleted");
+    }
+    await userToDelete.deleteOne({ _id: userToDelete._id });
+    res.json({ message: "User removed" });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
+const updateUserByID = asyncHandler(async (req, res) => {
+  const userToDelete = await user.findById(req.params.id).select("-password");
+
+  if (userToDelete) {
+    userToDelete.username = req.body.username || userToDelete.username;
+    userToDelete.email = req.body.email || userToDelete.email;
+    userToDelete.isAdmin = Boolean(req.body.isAdmin);
+
+    const updatedUser = await userToDelete.save();
+    res.status(200).json({ userToDelete });
+  } else {
+    res.status(404);
+    throw new Error("User not found");
+  }
+});
+
 export {
   createUser,
   loginUser,
@@ -140,5 +187,7 @@ export {
   getAllUsers,
   getCurrentUserProfile,
   updateCurrentUserProfile,
+  deleteUserById,
+  updateUserByID,
 };
 // const createUser =
