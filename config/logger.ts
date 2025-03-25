@@ -37,6 +37,7 @@ const loggerInstance = winston.createLogger({
  * @param {boolean} options.warn - Enable warning logs.
  * @param {boolean} options.debug - Enable debug logs.
  */
+
 const logMessage = (options: {
   info?: boolean;
   error?: boolean;

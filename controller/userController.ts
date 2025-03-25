@@ -173,7 +173,11 @@ const updateUserByID = asyncHandler(async (req, res) => {
     userToDelete.isAdmin = Boolean(req.body.isAdmin);
 
     const updatedUser = await userToDelete.save();
-    res.status(200).json({ userToDelete });
+
+    // Convert to object and remove password before sending response
+    const { password, ...userWithoutPassword } = updatedUser.toObject();
+
+    res.status(200).json({ ...userWithoutPassword });
   } else {
     res.status(404);
     throw new Error("User not found");
